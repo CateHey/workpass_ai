@@ -29,3 +29,9 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# local dev artefacts
+dev-server.log
+
+# confidential source brief — do not publish
+*.pdf
