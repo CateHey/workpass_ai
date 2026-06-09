@@ -35,3 +35,5 @@ dev-server.log
 
 # confidential source brief — do not publish
 *.pdf
+
+.vercel

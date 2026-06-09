@@ -84,6 +84,7 @@ export class ClaudeVerificationEngine implements VerificationEngine {
     const processingSeconds = Math.round(((Date.now() - started) / 1000) * 10) / 10;
 
     const baseWorker = await this.resolveWorker(request.workerId, parsed);
+    const now = new Date().toISOString();
 
     return {
       worker: baseWorker,
@@ -92,6 +93,21 @@ export class ClaudeVerificationEngine implements VerificationEngine {
       reasons: parsed.reasons,
       processingSeconds,
       source: "ai",
+      steps: [
+        { label: "Document received", detail: "Uploaded image ingested for live analysis.", status: "info", at: now },
+        { label: "Claude vision analysis", detail: `Analysed with ${this.model}.`, status: "pass", at: now },
+        {
+          label: "Decision",
+          detail:
+            parsed.status === "approved"
+              ? "Approved by the live model."
+              : parsed.status === "fraud_suspected"
+                ? "Fraud suspected — flagged by the live model."
+                : "Flagged with fixes by the live model.",
+          status: parsed.status === "approved" ? "pass" : parsed.status === "fraud_suspected" ? "fail" : "warn",
+          at: now,
+        },
+      ],
     };
   }
 
@@ -127,6 +143,17 @@ export class ClaudeVerificationEngine implements VerificationEngine {
       destinationSite: "—",
       submittedAt: new Date().toISOString(),
       credentials,
+      operations: {
+        employer: "—",
+        rosterPattern: "—",
+        shift: "—",
+        startDate: "—",
+        muster: "—",
+        supervisor: "—",
+        phone: "—",
+        competencies: [],
+        fitForWork: [],
+      },
     };
   }
 }

@@ -25,6 +25,9 @@ export function WorkerResultCard({
           <p className="truncate text-xs text-ink-500">
             {worker.role} · {worker.destinationSite}
           </p>
+          <p className="truncate text-[11px] text-ink-500">
+            {worker.operations.employer} · {worker.operations.rosterPattern}
+          </p>
         </div>
       </div>
 

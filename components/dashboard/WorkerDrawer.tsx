@@ -1,6 +1,11 @@
 "use client";
 
-import type { Credential, VerifiedWorker } from "@/lib/domain/types";
+import type {
+  Credential,
+  FitForWorkCheck,
+  VerificationStep,
+  VerifiedWorker,
+} from "@/lib/domain/types";
 import { Avatar } from "@/components/Avatar";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatDate } from "@/lib/ui/format";
@@ -48,10 +53,46 @@ export function WorkerDrawer({
             </span>
           </div>
 
-          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <Field label="Destination site" value={worker.destinationSite} />
-            <Field label="Submitted" value={formatDate(worker.submittedAt)} />
-          </dl>
+          {/* Deployment & operations */}
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-ink-900">Deployment &amp; operations</h3>
+            <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <Field label="Employer (labour-hire)" value={worker.operations.employer} />
+              <Field label="Destination site" value={worker.destinationSite} />
+              <Field label="Roster pattern" value={worker.operations.rosterPattern} />
+              <Field label="Shift" value={worker.operations.shift} />
+              <Field label="Start date" value={formatDate(worker.operations.startDate)} />
+              <Field label="Muster point" value={worker.operations.muster} />
+              <Field label="Supervisor" value={worker.operations.supervisor} />
+              <Field label="Contact" value={worker.operations.phone} />
+            </dl>
+          </div>
+
+          {/* Authorised to operate */}
+          {worker.operations.competencies.length > 0 ? (
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold text-ink-900">Authorised to operate</h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {worker.operations.competencies.map((c) => (
+                  <span key={c} className="pill border border-brand-200 bg-brand-50 text-brand-700">
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Fit for work */}
+          {worker.operations.fitForWork.length > 0 ? (
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold text-ink-900">Fit for work</h3>
+              <ul className="mt-2 space-y-1.5">
+                {worker.operations.fitForWork.map((f) => (
+                  <FitForWorkRow key={f.label} check={f} />
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {/* Reasons / fixes */}
           {reasons.length > 0 ? (
@@ -76,6 +117,18 @@ export function WorkerDrawer({
             </div>
           )}
 
+          {/* Verification timeline */}
+          {vw.steps.length > 0 ? (
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-ink-900">Verification timeline</h3>
+              <ol className="mt-3 space-y-0">
+                {vw.steps.map((s, i) => (
+                  <TimelineRow key={i} step={s} last={i === vw.steps.length - 1} />
+                ))}
+              </ol>
+            </div>
+          ) : null}
+
           {/* Credentials */}
           <div className="mt-6">
             <h3 className="text-sm font-semibold text-ink-900">Credentials</h3>
@@ -97,6 +150,47 @@ function Field({ label, value }: { label: string; value: string }) {
       <dt className="text-xs text-ink-500">{label}</dt>
       <dd className="font-medium text-ink-800">{value}</dd>
     </div>
+  );
+}
+
+const FIT_META: Record<FitForWorkCheck["status"], { label: string; bg: string; text: string }> = {
+  complete: { label: "Complete", bg: "bg-emerald-50", text: "text-emerald-700" },
+  pending: { label: "Pending", bg: "bg-amber-50", text: "text-amber-700" },
+  expired: { label: "Expired", bg: "bg-red-50", text: "text-red-700" },
+  not_required: { label: "N/A", bg: "bg-slate-100", text: "text-ink-500" },
+};
+
+function FitForWorkRow({ check }: { check: FitForWorkCheck }) {
+  const m = FIT_META[check.status];
+  return (
+    <li className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+      <span className="text-ink-700">{check.label}</span>
+      <span className="flex items-center gap-2">
+        {check.date ? <span className="text-xs text-ink-500">{formatDate(check.date)}</span> : null}
+        <span className={`pill ${m.bg} ${m.text}`}>{m.label}</span>
+      </span>
+    </li>
+  );
+}
+
+const STEP_META: Record<VerificationStep["status"], { dot: string; ring: string }> = {
+  pass: { dot: "bg-emerald-500", ring: "ring-emerald-100" },
+  warn: { dot: "bg-amber-500", ring: "ring-amber-100" },
+  fail: { dot: "bg-red-500", ring: "ring-red-100" },
+  info: { dot: "bg-slate-400", ring: "ring-slate-100" },
+};
+
+function TimelineRow({ step, last }: { step: VerificationStep; last: boolean }) {
+  const m = STEP_META[step.status];
+  return (
+    <li className="relative flex gap-3 pb-4">
+      {!last ? <span className="absolute left-[7px] top-4 h-full w-px bg-slate-200" /> : null}
+      <span className={`relative z-10 mt-1 h-3.5 w-3.5 shrink-0 rounded-full ${m.dot} ring-4 ${m.ring}`} />
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-ink-900">{step.label}</p>
+        <p className="text-xs text-ink-500">{step.detail}</p>
+      </div>
+    </li>
   );
 }
 

@@ -10,7 +10,7 @@
 // Reference "today" for the demo is 2026-06-09 (see TimeToActivate + expiries).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { Batch, Credential, Worker } from "@/lib/domain/types";
+import type { Batch, Credential, Worker, WorkerOperations } from "@/lib/domain/types";
 
 /** Ground-truth simulation hints consumed only by the mock engine. */
 export interface SimHints {
@@ -26,6 +26,9 @@ export interface MockWorker extends Worker {
   sim: SimHints;
 }
 
+/** Workers are defined without operational detail, which is merged in below. */
+type BaseMockWorker = Omit<MockWorker, "operations">;
+
 const AVATAR_COLORS = [
   "#4f46e5", "#0ea5e9", "#059669", "#d97706", "#db2777",
   "#7c3aed", "#0891b2", "#ca8a04", "#dc2626", "#2563eb",
@@ -39,7 +42,7 @@ function cred(c: Omit<Credential, "validation"> & { validation: Credential["vali
 // White Card: nationally recognised, generally non-expiring → expiryDate null.
 // HRWL / EWP / Forklift: 5-year cycles → real expiry dates that we track.
 
-export const MOCK_WORKERS: MockWorker[] = [
+const BASE_WORKERS: BaseMockWorker[] = [
   {
     id: "w-001",
     fullName: "Liam O'Sullivan",
@@ -203,6 +206,197 @@ export const MOCK_WORKERS: MockWorker[] = [
     sim: { photoQuality: "clear", nameMatches: true },
   },
 ];
+
+// ─── Operational deployment detail, keyed by worker id ───────────────────────
+// Kept separate from the credential data so the worker literals stay readable.
+const OPERATIONS: Record<string, WorkerOperations> = {
+  "w-001": {
+    employer: "Pilbara Workforce Solutions",
+    rosterPattern: "4/1 FIFO swing",
+    shift: "Day shift · 12h",
+    startDate: "2026-06-15",
+    muster: "Perth (PER) 04:50",
+    supervisor: "K. Donnelly (Lift Supervisor)",
+    phone: "+61 4•• ••• 211",
+    competencies: ["Dogging (DG)", "Load shifting", "Crane spotting"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-28" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-02" },
+      { label: "Site induction (BHP)", status: "complete", date: "2026-06-05" },
+    ],
+  },
+  "w-002": {
+    employer: "Pilbara Workforce Solutions",
+    rosterPattern: "4/1 FIFO swing",
+    shift: "Day shift · 12h",
+    startDate: "2026-06-15",
+    muster: "Perth (PER) 04:50",
+    supervisor: "K. Donnelly (Lift Supervisor)",
+    phone: "+61 4•• ••• 884",
+    competencies: ["General labouring", "Manual handling"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-30" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-03" },
+      { label: "Site induction (BHP)", status: "pending" },
+    ],
+  },
+  "w-003": {
+    employer: "WestLink Labour Hire",
+    rosterPattern: "Mon–Fri local",
+    shift: "Day shift · 10h",
+    startDate: "2026-06-12",
+    muster: "Kwinana gatehouse 06:00",
+    supervisor: "R. Patel (Yard Lead)",
+    phone: "+61 4•• ••• 530",
+    competencies: ["Forklift (LF)", "Order picking", "Yard logistics"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-22" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-01" },
+      { label: "Site induction (Kwinana)", status: "complete", date: "2026-06-04" },
+    ],
+  },
+  "w-004": {
+    employer: "Gladstone Industrial Services",
+    rosterPattern: "2/1 FIFO swing",
+    shift: "Day shift · 11h",
+    startDate: "2026-06-16",
+    muster: "Gladstone (GLT) 05:30",
+    supervisor: "M. Fraser (Maintenance Sup.)",
+    phone: "+61 4•• ••• 002",
+    competencies: ["EWP >11m (WP)", "Boom lift", "Working at heights"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-25" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-02" },
+      { label: "Heights medical", status: "complete", date: "2026-05-25" },
+    ],
+  },
+  "w-005": {
+    employer: "Pilbara Workforce Solutions",
+    rosterPattern: "4/1 FIFO swing",
+    shift: "Day shift · 12h",
+    startDate: "2026-06-15",
+    muster: "Perth (PER) 04:50",
+    supervisor: "K. Donnelly (Lift Supervisor)",
+    phone: "+61 4•• ••• 318",
+    competencies: ["Non-slewing crane (CN)", "Load shifting"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-27" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-02" },
+      { label: "Site induction (BHP)", status: "complete", date: "2026-06-05" },
+    ],
+  },
+  "w-006": {
+    employer: "WestLink Labour Hire",
+    rosterPattern: "Mon–Fri local",
+    shift: "Day shift · 10h",
+    startDate: "2026-06-12",
+    muster: "Kwinana gatehouse 06:00",
+    supervisor: "R. Patel (Yard Lead)",
+    phone: "+61 4•• ••• 771",
+    competencies: ["General labouring", "Manual handling"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-29" },
+      { label: "Drug & alcohol screen", status: "pending" },
+      { label: "Site induction (Kwinana)", status: "pending" },
+    ],
+  },
+  "w-007": {
+    employer: "Gladstone Industrial Services",
+    rosterPattern: "2/1 FIFO swing",
+    shift: "Night shift · 11h",
+    startDate: "2026-06-16",
+    muster: "Gladstone (GLT) 05:30",
+    supervisor: "M. Fraser (Maintenance Sup.)",
+    phone: "+61 4•• ••• 645",
+    competencies: ["Basic scaffolding (SB)", "Working at heights"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-24" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-01" },
+      { label: "Heights medical", status: "complete", date: "2026-05-24" },
+    ],
+  },
+  "w-008": {
+    employer: "Pilbara Workforce Solutions",
+    rosterPattern: "4/1 FIFO swing",
+    shift: "Day shift · 12h",
+    startDate: "2026-06-15",
+    muster: "Perth (PER) 04:50",
+    supervisor: "K. Donnelly (Lift Supervisor)",
+    phone: "+61 4•• ••• 099",
+    competencies: ["Traffic control", "Spotting"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-31" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-03" },
+      { label: "Site induction (BHP)", status: "pending" },
+    ],
+  },
+  "w-009": {
+    employer: "WestLink Labour Hire",
+    rosterPattern: "Mon–Fri local",
+    shift: "Day shift · 10h",
+    startDate: "2026-06-12",
+    muster: "Kwinana gatehouse 06:00",
+    supervisor: "R. Patel (Yard Lead)",
+    phone: "+61 4•• ••• 000",
+    competencies: ["Basic rigging (RB)"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "pending" },
+      { label: "Drug & alcohol screen", status: "pending" },
+      { label: "Site induction (Kwinana)", status: "not_required" },
+    ],
+  },
+  "w-010": {
+    employer: "Gladstone Industrial Services",
+    rosterPattern: "2/1 FIFO swing",
+    shift: "Day shift · 11h",
+    startDate: "2026-06-16",
+    muster: "Gladstone (GLT) 05:30",
+    supervisor: "M. Fraser (Maintenance Sup.)",
+    phone: "+61 4•• ••• 194",
+    competencies: ["General labouring", "Manual handling"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-26" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-02" },
+      { label: "Site induction (Gladstone)", status: "complete", date: "2026-06-04" },
+    ],
+  },
+  "w-011": {
+    employer: "WestLink Labour Hire",
+    rosterPattern: "Mon–Fri local",
+    shift: "Day shift · 10h",
+    startDate: "2026-06-12",
+    muster: "Kwinana gatehouse 06:00",
+    supervisor: "R. Patel (Yard Lead)",
+    phone: "+61 4•• ••• 820",
+    competencies: ["Forklift (LF)", "Order picking", "Yard logistics"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-23" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-01" },
+      { label: "Site induction (Kwinana)", status: "complete", date: "2026-06-04" },
+    ],
+  },
+  "w-012": {
+    employer: "Pilbara Workforce Solutions",
+    rosterPattern: "4/1 FIFO swing",
+    shift: "Day shift · 12h",
+    startDate: "2026-06-15",
+    muster: "Perth (PER) 04:50",
+    supervisor: "K. Donnelly (Lift Supervisor)",
+    phone: "+61 4•• ••• 231",
+    competencies: ["EWP >11m (WP)", "Boom lift", "Working at heights"],
+    fitForWork: [
+      { label: "Pre-employment medical", status: "complete", date: "2026-05-28" },
+      { label: "Drug & alcohol screen", status: "complete", date: "2026-06-02" },
+      { label: "Heights medical", status: "complete", date: "2026-05-28" },
+    ],
+  },
+};
+
+/** Workers with operational detail merged in — the canonical demo dataset. */
+export const MOCK_WORKERS: MockWorker[] = BASE_WORKERS.map((w) => ({
+  ...w,
+  operations: OPERATIONS[w.id],
+}));
 
 export const MOCK_BATCHES: Batch[] = [
   {

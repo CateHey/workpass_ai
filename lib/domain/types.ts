@@ -67,6 +67,35 @@ export interface FlagReason {
   credentialId?: string;
 }
 
+/** A single pre-mobilisation readiness check (medical, D&A, site induction). */
+export interface FitForWorkCheck {
+  label: string;
+  status: "complete" | "pending" | "expired" | "not_required";
+  date?: string; // ISO date of completion/expiry where relevant
+}
+
+/** Operational deployment detail — how/where this worker is being mobilised. */
+export interface WorkerOperations {
+  /** Labour-hire agency or contractor employing the worker. */
+  employer: string;
+  /** Roster/swing pattern, e.g. "4/1 FIFO swing". */
+  rosterPattern: string;
+  /** Shift detail, e.g. "Day shift · 12h". */
+  shift: string;
+  /** First day on site (ISO date). */
+  startDate: string;
+  /** FIFO muster/departure point, e.g. "Perth (PER) 04:50". */
+  muster: string;
+  /** Site supervisor the worker reports to. */
+  supervisor: string;
+  /** Masked contact number (mock). */
+  phone: string;
+  /** Equipment/tasks the worker is authorised to operate once approved. */
+  competencies: string[];
+  /** Pre-mobilisation readiness checks. */
+  fitForWork: FitForWorkCheck[];
+}
+
 export interface Worker {
   id: string;
   fullName: string;
@@ -76,6 +105,16 @@ export interface Worker {
   destinationSite: string; // e.g. "Pilbara Iron Ore — Roster 4/1"
   submittedAt: string; // ISO datetime
   credentials: Credential[];
+  operations: WorkerOperations;
+}
+
+/** One step in the verification audit trail shown per worker. */
+export interface VerificationStep {
+  label: string;
+  detail: string;
+  status: "pass" | "warn" | "fail" | "info";
+  /** Timestamp the step completed (ISO datetime). */
+  at: string;
 }
 
 /** A worker plus the result of running them through the verification engine. */
@@ -89,6 +128,8 @@ export interface VerifiedWorker {
   processingSeconds: number;
   /** "mock" or "ai" — surfaced in the UI so the demo is honest about its source. */
   source: VerificationSource;
+  /** Step-by-step audit trail of what the engine checked. */
+  steps: VerificationStep[];
 }
 
 export type VerificationSource = "mock" | "ai";

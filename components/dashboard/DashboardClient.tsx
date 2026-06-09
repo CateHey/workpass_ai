@@ -142,8 +142,8 @@ export function DashboardClient() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-ink-900">{w.fullName}</p>
                       <p className="truncate text-xs text-ink-500">
-                        {w.role} · {w.credentials.length} document
-                        {w.credentials.length === 1 ? "" : "s"} · {w.destinationSite}
+                        {w.role} · {w.operations.employer} · {w.operations.rosterPattern} ·{" "}
+                        {w.credentials.length} doc{w.credentials.length === 1 ? "" : "s"}
                       </p>
                     </div>
                     <span className="pill border border-slate-200 bg-slate-50 text-ink-500">Pending</span>

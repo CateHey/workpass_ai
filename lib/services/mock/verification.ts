@@ -1,4 +1,9 @@
-import type { FlagReason, VerificationStatus, VerifiedWorker } from "@/lib/domain/types";
+import type {
+  FlagReason,
+  VerificationStatus,
+  VerificationStep,
+  VerifiedWorker,
+} from "@/lib/domain/types";
 import type { VerificationEngine, VerificationRequest } from "@/lib/services/interfaces";
 import { MOCK_WORKERS, type MockWorker } from "./data";
 
@@ -97,15 +102,107 @@ export class MockVerificationEngine implements VerificationEngine {
     }
 
     const { sim: _sim, ...worker } = mock;
+    const processingSeconds = pseudoSeconds(mock.id);
     return {
       worker,
       status,
       confidence: confidenceFor(status, reasons.length),
       reasons,
-      processingSeconds: pseudoSeconds(mock.id),
+      processingSeconds,
       source: "mock",
+      steps: buildSteps(mock, status),
     };
   }
+}
+
+/** Builds a believable audit trail of what the engine checked, in order. */
+function buildSteps(mock: MockWorker, status: VerificationStatus): VerificationStep[] {
+  const base = new Date(mock.submittedAt).getTime();
+  let offset = 0;
+  const at = (sec: number) => {
+    offset += sec;
+    return new Date(base + offset * 1000).toISOString();
+  };
+
+  const hasFraud = Boolean(mock.sim.fraud);
+  const expiredCred = mock.credentials.find(
+    (c) => c.validation.status === "expired" || isNearExpiry(c.expiryDate),
+  );
+  const mismatchCred = mock.credentials.find((c) => c.validation.status === "mismatch");
+
+  const steps: VerificationStep[] = [
+    {
+      label: "Documents received",
+      detail: `${mock.credentials.length} document${mock.credentials.length === 1 ? "" : "s"} ingested from the batch upload.`,
+      status: "info",
+      at: at(1),
+    },
+    {
+      label: "Image quality & OCR",
+      detail:
+        mock.sim.photoQuality === "blurry"
+          ? "Photo too blurry to read reliably — extraction confidence below threshold."
+          : "Fields extracted cleanly (name, number, class, expiry).",
+      status: mock.sim.photoQuality === "blurry" ? "warn" : "pass",
+      at: at(1),
+    },
+    {
+      label: "Authenticity & tamper check",
+      detail:
+        hasFraud && mock.sim.fraud?.kind === "tampered_document"
+          ? "Tampering signals detected in the document layout."
+          : hasFraud
+            ? "Layout inconsistencies detected — flagged for manual review."
+            : "No tampering signals; security features consistent.",
+      status: hasFraud ? "fail" : "pass",
+      at: at(1),
+    },
+    {
+      label: "Issuing-body validation",
+      detail:
+        hasFraud && mock.sim.fraud?.kind === "credential_not_found"
+          ? "No matching record found at the issuing body."
+          : mismatchCred
+            ? "Record found, but registered name differs from the profile."
+            : "Validated against the issuing body — record matches.",
+      status: hasFraud ? "fail" : mismatchCred ? "warn" : "pass",
+      at: at(1),
+    },
+    {
+      label: "Expiry & WHS compliance",
+      detail: expiredCred
+        ? `${expiredCred.label} is expired or expires before the roster completes.`
+        : "All tickets valid for the full roster period.",
+      status: expiredCred ? "warn" : "pass",
+      at: at(1),
+    },
+    {
+      label: "Identity match",
+      detail: mock.sim.nameMatches
+        ? "Name on documents matches the worker profile."
+        : "Name on a credential does not match the profile.",
+      status: mock.sim.nameMatches ? "pass" : "warn",
+      at: at(1),
+    },
+    {
+      label: "Decision",
+      detail:
+        status === "approved"
+          ? "Auto-approved — cleared for site."
+          : status === "fraud_suspected"
+            ? "Fraud suspected — blocked, escalated for manual review."
+            : "Flagged — actionable fixes returned to the coordinator.",
+      status: status === "approved" ? "pass" : status === "fraud_suspected" ? "fail" : "warn",
+      at: at(1),
+    },
+  ];
+  return steps;
+}
+
+function isNearExpiry(expiryDate: string | null): boolean {
+  if (!expiryDate) return false;
+  const days = daysBetween(TODAY, new Date(expiryDate));
+  return days <= 7;
 }
 
 function elevate(current: VerificationStatus, next: VerificationStatus): VerificationStatus {
