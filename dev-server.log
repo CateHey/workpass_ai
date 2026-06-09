@@ -1,0 +1,46 @@
+  ▲ Next.js 14.2.33
+  - Local:        http://localhost:3005
+
+ ✓ Starting...
+ ✓ Ready in 4.8s
+ ○ Compiling / ...
+request to https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7W0Q5n-wU.woff2 failed, reason: 
+
+Retrying 1/3...
+request to https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2 failed, reason: 
+
+Retrying 1/3...
+ ✓ Compiled / in 11.3s (521 modules)
+ GET / 200 in 11813ms
+ ○ Compiling /app ...
+ ✓ Compiled /app in 8.5s (538 modules)
+ GET /app 200 in 8816ms
+ ○ Compiling /app/expiry ...
+ ✓ Compiled /app/expiry in 1555ms (613 modules)
+ GET /app/expiry 200 in 1896ms
+ ✓ Compiled /app/fraud in 492ms (616 modules)
+ GET /app/fraud 200 in 614ms
+ ○ Compiling /metrics ...
+ ✓ Compiled /metrics in 521ms (618 modules)
+ GET /metrics 200 in 665ms
+ ○ Compiling /api/capabilities ...
+ ✓ Compiled /api/capabilities in 570ms (387 modules)
+ GET /api/capabilities 200 in 782ms
+ ✓ Compiled /api/batch in 305ms (389 modules)
+ GET /api/batch 200 in 420ms
+ ○ Compiling /api/verify-batch ...
+ ✓ Compiled /api/verify-batch in 533ms (402 modules)
+ POST /api/verify-batch 200 in 646ms
+ ✓ Compiled /api/expiry in 298ms (404 modules)
+[MockNotifications] would remind Marcus Webb about HRWL — Class CN (Non-slewing crane) (6d)
+[MockNotifications] would remind Tomas Novak about HRWL — Class LF (Forklift) (31d)
+[MockNotifications] would remind Olivia Brennan about EWP Licence (>11m boom) (70d)
+ GET /api/expiry 200 in 373ms
+ POST /api/verify-batch 400 in 37ms
+ GET / 200 in 132ms
+ GET /metrics 200 in 35ms
+ GET /metrics 200 in 38ms
+ GET /app/fraud 200 in 54ms
+ GET /app/fraud 200 in 45ms
+ GET /app/expiry 200 in 60ms
+ GET / 200 in 88ms
